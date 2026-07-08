@@ -1,3 +1,3 @@
 pub mod deps;
-pub mod import_id;
+pub mod multi_target;
 pub mod paths;

@@ -11,26 +11,6 @@ pub fn parse(id: &str) -> Result<ParsedImportId> {
     let (raw_path, query) = without_file
         .split_once('?')
         .map_or((without_file, ""), |(path, query)| (path, query));
-    if !without_file.as_bytes().contains(&b'%') {
-        let params = query.split('&').filter(|part| !part.is_empty());
-        let mut has_raw = false;
-        let mut with = Vec::new();
-
-        for param in params {
-            let (key, value) = param.split_once('=').unwrap_or((param, ""));
-            if key == "raw" {
-                has_raw = true;
-            } else if key == "with" {
-                with.push(value.to_string());
-            }
-        }
-
-        return Ok(ParsedImportId {
-            valid: raw_path.ends_with(".elm") && !has_raw,
-            path: raw_path.to_string(),
-            with,
-        });
-    }
     let path = percent_decode(raw_path);
     let params = query.split('&').filter(|part| !part.is_empty());
     let mut has_raw = false;
@@ -53,9 +33,6 @@ pub fn parse(id: &str) -> Result<ParsedImportId> {
 }
 
 fn percent_decode(input: &str) -> String {
-    if !input.as_bytes().contains(&b'%') {
-        return input.to_string();
-    }
     let bytes = input.as_bytes();
     let mut out = String::with_capacity(input.len());
     let mut i = 0;

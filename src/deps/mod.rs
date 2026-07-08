@@ -2,7 +2,7 @@ pub mod elm_json;
 pub mod imports;
 
 use crate::{Error, Result};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -13,9 +13,18 @@ pub fn dependencies(entry: &Path) -> Result<Vec<PathBuf>> {
 }
 
 pub fn dependencies_with_source_dirs(entry: &Path, source_dirs: &[PathBuf]) -> Result<Vec<PathBuf>> {
+    let mut module_cache = HashMap::new();
+    dependencies_with_source_dirs_cached(entry, source_dirs, &mut module_cache)
+}
+
+pub fn dependencies_with_source_dirs_cached(
+    entry: &Path,
+    source_dirs: &[PathBuf],
+    module_cache: &mut HashMap<String, Option<PathBuf>>,
+) -> Result<Vec<PathBuf>> {
     let mut known = HashSet::new();
     let mut out = HashSet::new();
-    collect(entry, source_dirs, &mut known, &mut out)?;
+    collect(entry, source_dirs, module_cache, &mut known, &mut out)?;
     let mut deps: Vec<_> = out.into_iter().collect();
     deps.sort();
     Ok(deps)
@@ -24,6 +33,7 @@ pub fn dependencies_with_source_dirs(entry: &Path, source_dirs: &[PathBuf]) -> R
 fn collect(
     file: &Path,
     source_dirs: &[PathBuf],
+    module_cache: &mut HashMap<String, Option<PathBuf>>,
     known: &mut HashSet<PathBuf>,
     out: &mut HashSet<PathBuf>,
 ) -> Result<()> {
@@ -35,9 +45,9 @@ fn collect(
     let source = fs::read_to_string(&file)
         .map_err(|e| Error::new(format!("Failed to read Elm source {}: {e}", file.display())))?;
     for name in imports::imports_from_source(&source) {
-        if let Some(dep) = resolve_module(&name, source_dirs) {
+        if let Some(dep) = resolve_module(&name, source_dirs, module_cache) {
             if out.insert(dep.clone()) && dep.extension().and_then(|e| e.to_str()) == Some("elm") {
-                collect(&dep, source_dirs, known, out)?;
+                collect(&dep, source_dirs, module_cache, known, out)?;
             }
         }
     }
@@ -45,12 +55,21 @@ fn collect(
     Ok(())
 }
 
-fn resolve_module(name: &str, source_dirs: &[PathBuf]) -> Option<PathBuf> {
+fn resolve_module(
+    name: &str,
+    source_dirs: &[PathBuf],
+    module_cache: &mut HashMap<String, Option<PathBuf>>,
+) -> Option<PathBuf> {
+    if let Some(path) = module_cache.get(name) {
+        return path.clone();
+    }
     let rel = format!("{}.elm", name.replace('.', "/"));
-    source_dirs
+    let resolved = source_dirs
         .iter()
         .map(|dir| dir.join(&rel))
-        .find(|path| path.exists())
+        .find(|path| path.exists());
+    module_cache.insert(name.to_string(), resolved.clone());
+    resolved
 }
 
 fn base_dir(file: &Path) -> Result<PathBuf> {

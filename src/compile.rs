@@ -1,4 +1,5 @@
 use crate::{assets, deps, elm_make, esm, hmr, options, Error, Result};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 pub struct CompileRequest {
@@ -25,8 +26,13 @@ pub fn compile(request: CompileRequest) -> Result<CompileOutput> {
 
     let mut dependencies = Vec::new();
     let source_dirs = deps::source_dirs_for(first)?;
+    let mut module_cache = HashMap::new();
     for target in &request.targets {
-        dependencies.extend(deps::dependencies_with_source_dirs(target, &source_dirs)?);
+        dependencies.extend(deps::dependencies_with_source_dirs_cached(
+            target,
+            &source_dirs,
+            &mut module_cache,
+        )?);
     }
     dependencies.sort();
     dependencies.dedup();
@@ -67,15 +73,7 @@ pub(crate) fn vite_project_path(path: &Path, current_dir: &Path) -> String {
 }
 
 fn path_to_posix(path: &Path) -> String {
-    let mut parts = Vec::new();
-    for component in path.components() {
-        parts.push(component.as_os_str().to_string_lossy().into_owned());
-    }
-    if parts.is_empty() {
-        ".".into()
-    } else {
-        parts.join("/")
-    }
+    path.to_string_lossy().replace('\\', "/")
 }
 
 pub(crate) fn lexical_relative(from: &Path, to: &Path) -> Option<String> {
