@@ -1,11 +1,15 @@
 use crate::Result;
 use std::collections::hash_map::DefaultHasher;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 
 pub fn inject(code: &str) -> Result<String> {
     let mut paths = Vec::new();
-    let helper_names = helper_asset_functions(code);
+    let helper_names = if code.contains("VITE_PLUGIN_HELPER_ASSET") {
+        helper_asset_functions(code)
+    } else {
+        Vec::new()
+    };
     let mut out = String::with_capacity(code.len());
     let mut rest = code;
     let prefix = "'[VITE_PLUGIN_ELM_ASSET:";
@@ -37,11 +41,15 @@ pub fn inject(code: &str) -> Result<String> {
     }
 
     let mut seen = HashSet::new();
+    let mut names = HashMap::new();
     let mut imports = String::new();
     for path in paths {
         if seen.insert(path.clone()) {
             imports.push_str("import ");
-            imports.push_str(&import_name(&path));
+            let name = names
+                .entry(path.clone())
+                .or_insert_with(|| import_name(&path));
+            imports.push_str(name);
             imports.push_str(" from '");
             imports.push_str(&path);
             imports.push_str("'\n");

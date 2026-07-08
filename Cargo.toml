@@ -12,3 +12,14 @@ path = "src/lib.rs"
 [[bin]]
 name = "rs-vite-plugin-elm"
 path = "src/main.rs"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+dbg_macro = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unwrap_used = "deny"

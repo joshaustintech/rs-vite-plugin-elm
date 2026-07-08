@@ -24,6 +24,9 @@ jobs:
       - name: Cargo test
         run: cargo test
 
+      - name: Cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
       - name: npm build
         run: npm run build
 

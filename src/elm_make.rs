@@ -36,13 +36,12 @@ pub fn compile_to_string(targets: &[String], cwd: &Path, options: &Options) -> R
         .output()
         .map_err(|e| Error::new(format!("Could not run Elm compiler \"{}\": {e}", options.path_to_elm)))?;
 
-    let combined = format!(
-        "{}{}",
-        String::from_utf8_lossy(&output_result.stdout),
-        String::from_utf8_lossy(&output_result.stderr)
-    );
-
     if !output_result.status.success() {
+        let combined = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output_result.stdout),
+            String::from_utf8_lossy(&output_result.stderr)
+        );
         let _ = fs::remove_file(&output);
         return Err(Error::new(format!("Compilation failed\n{combined}")));
     }

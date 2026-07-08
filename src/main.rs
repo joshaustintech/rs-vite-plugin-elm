@@ -1,5 +1,3 @@
-#![forbid(unsafe_code)]
-
 use rs_vite_plugin_elm::options::Options;
 use rs_vite_plugin_elm::{compile, CompileRequest};
 use std::env;
@@ -75,15 +73,16 @@ fn parse_optional_bool(value: &str) -> Result<Option<bool>, Box<dyn std::error::
 }
 
 fn json_escape(value: &str) -> String {
-    value
-        .chars()
-        .flat_map(|ch| match ch {
-            '"' => "\\\"".chars().collect::<Vec<_>>(),
-            '\\' => "\\\\".chars().collect(),
-            '\n' => "\\n".chars().collect(),
-            '\r' => "\\r".chars().collect(),
-            '\t' => "\\t".chars().collect(),
-            c => vec![c],
-        })
-        .collect()
+    let mut escaped = String::with_capacity(value.len());
+    for ch in value.chars() {
+        match ch {
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            c => escaped.push(c),
+        }
+    }
+    escaped
 }

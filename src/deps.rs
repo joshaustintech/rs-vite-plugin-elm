@@ -158,11 +158,11 @@ pub fn source_dirs_from_elm_json(text: &str) -> Vec<String> {
         return Vec::new();
     };
     let mut dirs = Vec::new();
-    let mut chars = text[open + 1..close].chars().peekable();
+    let mut chars = text[open + 1..close].chars();
     while let Some(ch) = chars.next() {
         if ch == '"' {
             let mut value = String::new();
-            while let Some(next) = chars.next() {
+            for next in chars.by_ref() {
                 if next == '"' {
                     break;
                 }
