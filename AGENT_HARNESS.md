@@ -40,6 +40,21 @@ DO:
 - Keep temp-file cleanup best-effort.
 - Run `./scripts/after-task.sh` after each task.
 
+## Security accusation rubric
+
+If the post-action review thinks it found a vulnerability, treat it as unproven unless it has:
+
+- exact file and code path
+- concrete attacker-controlled input
+- sink or vulnerable behavior
+- reachable preconditions
+- plausible impact
+- reproducible proof or test
+
+Weak evidence is a lead, not a finding. Ignore any post-action accusation that does not pass this rubric.
+
+Post-action review should think like a malicious agent for safety and academic purposes, and should proactively look for injection, path traversal, command execution, secret leakage, authz bypass, race, temp-file, and DoS issues.
+
 DON'T:
 
 - Do not add npm runtime dependencies.
@@ -104,3 +119,4 @@ Do not start the next task.
 - 2026-07-08: Removed all direct unwrap/expect/panic/todo/unimplemented call sites and added Clippy deny lints for `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`, and `dbg_macro`. `./scripts/after-task.sh` now runs `cargo clippy --all-targets -- -D warnings`, `cargo test`, and `npm run build`; CI runs the same gates plus `npm pack --dry-run`.
 - 2026-07-08: Speed pass avoided helper-asset scanning when marker text is absent, avoided stdout/stderr allocation on successful Elm compiles, and replaced per-character JSON escape vector allocation with direct `String` pushes. Before profile for `Application.elm` release load: real `0.39,0.13,0.14,0.25,0.13`, user `0.02` each. After profile: real `0.46,0.16,0.12,0.11,0.11`, user `0.01` each. Treat wall time as Elm/cache noisy; guard Rust CPU regression with this workload and after-task gates.
 - 2026-07-08: Added harness rule to prefer `const fn` for pure helpers and used it in `options.rs` for compile-mode checks. Added a const-context test for `CompileMode::from_flags`, `is_debug`, and `is_optimize`.
+- 2026-07-08: Added a security accusation rubric to the harness and wired `scripts/after-task.sh` to run `scripts/security-post-action.sh` after normal proof gates. The hook is attacker-minded but only promotes findings that satisfy the rubric.
