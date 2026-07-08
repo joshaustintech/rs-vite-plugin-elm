@@ -1,4 +1,5 @@
 use super::*;
+use std::path::PathBuf;
 
 #[test]
 fn parses_elm_import_ids() -> Result<()> {
@@ -12,17 +13,68 @@ fn parses_elm_import_ids() -> Result<()> {
 
 #[test]
 fn parses_options_without_invalid_debug_optimize_state() {
-    let dev = options::Options::from_env(false, None, None, None);
+    let dev = options::Options::from_env(options::EnvOptions {
+        is_build: false,
+        debug: None,
+        optimize: None,
+        verbose: None,
+        path_to_elm: None,
+        cwd: None,
+        report: None,
+        docs: None,
+        process_opts: None,
+    });
     assert!(dev.debug());
     assert!(!dev.optimize());
 
-    let prod = options::Options::from_env(true, None, None, None);
+    let prod = options::Options::from_env(options::EnvOptions {
+        is_build: true,
+        debug: None,
+        optimize: None,
+        verbose: None,
+        path_to_elm: None,
+        cwd: None,
+        report: None,
+        docs: None,
+        process_opts: None,
+    });
     assert!(!prod.debug());
     assert!(prod.optimize());
 
-    let debug_prod = options::Options::from_env(true, Some(true), None, None);
+    let debug_prod = options::Options::from_env(options::EnvOptions {
+        is_build: true,
+        debug: Some(true),
+        optimize: None,
+        verbose: None,
+        path_to_elm: None,
+        cwd: None,
+        report: None,
+        docs: None,
+        process_opts: None,
+    });
     assert!(debug_prod.debug());
     assert!(!debug_prod.optimize());
+
+    let cwd = Some(PathBuf::from("/tmp/project"));
+    let full = options::Options::from_env(options::EnvOptions {
+        is_build: true,
+        debug: Some(false),
+        optimize: Some(true),
+        verbose: Some(false),
+        path_to_elm: Some("elm-0.19.1".into()),
+        cwd: cwd.clone(),
+        report: Some("json".into()),
+        docs: Some("docs.json".into()),
+        process_opts: Some("{\"spawn\":true}".into()),
+    });
+    assert!(!full.debug());
+    assert!(full.optimize());
+    assert!(!full.verbose);
+    assert_eq!(full.path_to_elm, "elm-0.19.1");
+    assert_eq!(full.cwd, cwd);
+    assert_eq!(full.report.as_deref(), Some("json"));
+    assert_eq!(full.docs.as_deref(), Some("docs.json"));
+    assert_eq!(full.process_opts.as_deref(), Some("{\"spawn\":true}"));
 }
 
 #[test]
@@ -55,14 +107,24 @@ fn injects_helper_asset_calls() -> Result<()> {
 }
 
 #[test]
+fn deduplicates_plain_and_helper_asset_imports() -> Result<()> {
+    let code = "var $helper$asset = function (path) {\n\treturn 'VITE_PLUGIN_HELPER_ASSET' + path;\n};\nconst a = '[VITE_PLUGIN_ELM_ASSET:/assets/logo.png?inline]';\nconst b = $helper$asset('/assets/logo.png?inline');";
+    let out = assets::inject(code)?;
+    assert_eq!(out.matches("from '/assets/logo.png?inline'").count(), 1);
+    Ok(())
+}
+
+#[test]
 fn builds_elm_make_args() {
     let opts = options::Options {
         is_build: true,
         mode: options::CompileMode::Optimize,
         verbose: true,
         path_to_elm: "elm".into(),
+        cwd: None,
         report: Some("json".into()),
         docs: None,
+        process_opts: None,
     };
     let args = elm_make::args(&["Main.elm".into()], "/tmp/out.js", &opts);
     assert_eq!(args, vec!["make", "Main.elm", "--output", "/tmp/out.js", "--optimize", "--report", "json"]);

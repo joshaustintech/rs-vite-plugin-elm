@@ -14,28 +14,13 @@ pub struct CompileOutput {
 }
 
 pub fn compile(request: CompileRequest) -> Result<CompileOutput> {
-    let first = request
-        .targets
-        .first()
-        .ok_or_else(|| Error::new("No Elm targets supplied"))?;
+    let dependencies = dependencies_for_targets(&request.targets, request.cwd.as_deref())?;
     let cwd = request
         .cwd
         .clone()
-        .or_else(|| deps::find_elm_json(first).and_then(|p| p.parent().map(Path::to_path_buf)))
+        .or_else(|| request.options.cwd.clone())
+        .or_else(|| request.targets.first().and_then(|first| deps::find_elm_json(first)).and_then(|p| p.parent().map(Path::to_path_buf)))
         .ok_or_else(|| Error::new("Could not find elm.json"))?;
-
-    let mut dependencies = Vec::new();
-    let source_dirs = deps::source_dirs_for(first)?;
-    let mut module_cache = HashMap::new();
-    for target in &request.targets {
-        dependencies.extend(deps::dependencies_with_source_dirs_cached(
-            target,
-            &source_dirs,
-            &mut module_cache,
-        )?);
-    }
-    dependencies.sort();
-    dependencies.dedup();
 
     let target_strings = request
         .targets
@@ -44,23 +29,47 @@ pub fn compile(request: CompileRequest) -> Result<CompileOutput> {
         .collect::<Vec<_>>();
     let compiled = elm_make::compile_to_string(&target_strings, &cwd, &request.options)?;
     let esm = esm::to_es_module(&compiled)?;
-    let with_assets = assets::inject(&esm)?;
-    let code = if request.options.is_build {
-        with_assets
+    let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let code = postprocess(&esm, &dependencies, request.options.is_build, &current_dir)?;
+
+    Ok(CompileOutput { code, dependencies })
+}
+
+pub fn dependencies_for_targets(targets: &[PathBuf], cwd: Option<&Path>) -> Result<Vec<PathBuf>> {
+    let first = targets.first().ok_or_else(|| Error::new("No Elm targets supplied"))?;
+    let source_dirs = match cwd {
+        Some(dir) => deps::source_dirs_for(dir)?,
+        None => deps::source_dirs_for(first)?,
+    };
+    let mut dependencies = Vec::new();
+    let mut module_cache = HashMap::new();
+    for target in targets {
+        dependencies.extend(deps::dependencies_with_source_dirs_cached(
+            target,
+            &source_dirs,
+            &mut module_cache,
+        )?);
+    }
+    dependencies.sort();
+    dependencies.dedup();
+    Ok(dependencies)
+}
+
+pub fn postprocess(code: &str, dependencies: &[PathBuf], is_build: bool, current_dir: &Path) -> Result<String> {
+    let with_assets = assets::inject(code)?;
+    if is_build {
+        Ok(with_assets)
     } else {
         let trimmed = with_assets.replace(
             "console.warn('Compiled in DEBUG mode",
             "// console.warn('Compiled in DEBUG mode",
         );
-        let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
         let deps = dependencies
             .iter()
-            .map(|path| vite_project_path(path, &current_dir))
+            .map(|path| vite_project_path(path, current_dir))
             .collect::<Vec<_>>();
-        hmr::inject(&trimmed, &deps)?
-    };
-
-    Ok(CompileOutput { code, dependencies })
+        hmr::inject(&trimmed, &deps)
+    }
 }
 
 pub(crate) fn vite_project_path(path: &Path, current_dir: &Path) -> String {

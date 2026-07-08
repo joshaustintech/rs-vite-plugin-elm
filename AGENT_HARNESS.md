@@ -97,7 +97,7 @@ DON'T:
 - [x] Implement asset transform tests and code.
 - [x] Add HMR template injection and nav-key hotfix tests.
 - [x] Add thin Vite wrapper with compile serialization.
-- [ ] Run parity smoke against current `vite-plugin-elm/example`.
+- [x] Run parity smoke against current `vite-plugin-elm/example`.
 - [ ] Keep GitHub Actions and agent hooks green after every task.
 
 ## Loop prompt template
@@ -135,3 +135,5 @@ Do not start the next task.
 - 2026-07-08: Expanded the security review floor to a 100-item watchlist in `scripts/security-watchlist.md`, tightened `scripts/security-post-action.sh`, and scanned the current repo. Proof: `./scripts/after-task.sh` passed. No confirmed vulnerabilities met the rubric; one temp-file-race lead in `src/elm_make.rs` remained unproven and was not counted as a finding.
 - 2026-07-08: Refactored Rust source layout so every Rust file stays at or below 150 lines, added `build.rs` enforcement for that limit, and split `src/lib.rs` and `src/deps.rs` into smaller human-readable modules. Proof: `./scripts/after-task.sh` passed after the refactor, and `find src -name '*.rs' -print0 | xargs -0 wc -l` showed all Rust source files under the cap.
 - 2026-07-08: Proven speed pass: `deps::dependencies` now resolves modules without per-import thread spawn, `compile::vite_project_path` fast-paths `strip_prefix` with direct string flattening, and `compile` now reuses shared module-resolution cache across targets. Proof: `cargo test speed_ -- --nocapture` and `cargo test --release speed_ -- --nocapture` both passed; debug timings were `paths fast=33.499583ms slow=73.159ms`, `deps fast=47.2005ms slow=53.329791ms`, and `multi_target fast=325.23925ms slow=332.370083ms`; release timings were `paths fast=10.95975ms slow=23.971833ms`, `deps fast=34.821584ms slow=42.124542ms`, and `multi_target fast=225.875458ms slow=238.209208ms`.
+- 2026-07-08: Matched the original plugin's public config surface in the Rust/JS shim pair: `compiler`, `nodeElmCompilerOptions.{cwd,docs,debug,optimize,processOpts,report,pathToElm,verbose}`, plus Rust CLI plumbing for `cwd`, `report`, `docs`, `process_opts`, and custom-compiler postprocessing. Proof: `cargo test`, `npm run build`, and `./scripts/after-task.sh` passed after the refactor.
+- 2026-07-08: Parity smoke on a throwaway copy of `vite-plugin-elm/example` with `vite.config.ts` switched to `rs-vite-plugin-elm` passed after fixing duplicate asset import deduping across plain tags and helper calls. Proof: `HOME=<temp> npm run build` in the smoke copy completed successfully after seeding the temp Elm cache from `/Users/josh/.elm`.

@@ -7,12 +7,9 @@ pub fn inject(code: &str) -> Result<String> {
     if !code.contains("[VITE_PLUGIN_ELM_ASSET:") && !code.contains("VITE_PLUGIN_HELPER_ASSET") {
         return Ok(code.to_string());
     }
-    let mut plain_paths = Vec::new();
-    let mut plain_seen = HashSet::new();
-    let mut plain_names = HashMap::new();
-    let mut helper_import_paths = Vec::new();
-    let mut helper_seen = HashSet::new();
-    let mut helper_name_cache = HashMap::new();
+    let mut import_paths = Vec::new();
+    let mut import_seen = HashSet::new();
+    let mut import_name_cache = HashMap::new();
     let helper_names = if code.contains("VITE_PLUGIN_HELPER_ASSET") {
         helper_asset_functions(code)
     } else {
@@ -28,9 +25,9 @@ pub fn inject(code: &str) -> Result<String> {
         out.push_str(&rest[..start]);
         if let Some(end) = rest[abs_start..].find(suffix) {
             let path = &rest[abs_start..abs_start + end];
-            record_plain_path(path, &mut plain_paths, &mut plain_seen);
+            record_owned_path(path.to_string(), &mut import_paths, &mut import_seen);
             let name = {
-                let entry = plain_names.entry(path).or_insert_with(|| import_name(path));
+                let entry = import_name_cache.entry(path.to_string()).or_insert_with(|| import_name(path));
                 entry.clone()
             };
             out.push_str(&name);
@@ -46,30 +43,19 @@ pub fn inject(code: &str) -> Result<String> {
         let (next, helper_paths) = replace_helper_calls(&out, &helper);
         out = next;
         for path in helper_paths {
-            record_owned_path(path, &mut helper_import_paths, &mut helper_seen);
+            record_owned_path(path, &mut import_paths, &mut import_seen);
         }
     }
 
-    if plain_paths.is_empty() && helper_import_paths.is_empty() {
+    if import_paths.is_empty() {
         return Ok(code.to_string());
     }
 
     let mut imports = String::new();
-    for path in plain_paths {
+    for path in import_paths {
         imports.push_str("import ");
         let name = {
-            let entry = plain_names.entry(path).or_insert_with(|| import_name(path));
-            entry.clone()
-        };
-        imports.push_str(&name);
-        imports.push_str(" from '");
-        imports.push_str(path);
-        imports.push_str("'\n");
-    }
-    for path in helper_import_paths {
-        imports.push_str("import ");
-        let name = {
-            let entry = helper_name_cache
+            let entry = import_name_cache
                 .entry(path.clone())
                 .or_insert_with(|| import_name(&path));
             entry.clone()
@@ -82,12 +68,6 @@ pub fn inject(code: &str) -> Result<String> {
     imports.push('\n');
     imports.push_str(&out);
     Ok(imports)
-}
-
-fn record_plain_path<'a>(path: &'a str, import_paths: &mut Vec<&'a str>, seen_paths: &mut HashSet<&'a str>) {
-    if seen_paths.insert(path) {
-        import_paths.push(path);
-    }
 }
 
 fn record_owned_path(path: String, import_paths: &mut Vec<String>, seen_paths: &mut HashSet<String>) {
