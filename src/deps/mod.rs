@@ -5,14 +5,17 @@ use crate::{Error, Result};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::thread;
 
 pub fn dependencies(entry: &Path) -> Result<Vec<PathBuf>> {
     let base = base_dir(entry)?;
     let source_dirs = source_dirs_for(&base)?;
+    dependencies_with_source_dirs(entry, &source_dirs)
+}
+
+pub fn dependencies_with_source_dirs(entry: &Path, source_dirs: &[PathBuf]) -> Result<Vec<PathBuf>> {
     let mut known = HashSet::new();
     let mut out = HashSet::new();
-    collect(entry, &source_dirs, &mut known, &mut out)?;
+    collect(entry, source_dirs, &mut known, &mut out)?;
     let mut deps: Vec<_> = out.into_iter().collect();
     deps.sort();
     Ok(deps)
@@ -31,17 +34,8 @@ fn collect(
 
     let source = fs::read_to_string(&file)
         .map_err(|e| Error::new(format!("Failed to read Elm source {}: {e}", file.display())))?;
-    let imports = imports::imports_from_source(&source);
-    let handles: Vec<_> = imports
-        .into_iter()
-        .map(|name| {
-            let dirs = source_dirs.to_vec();
-            thread::spawn(move || resolve_module(&name, &dirs))
-        })
-        .collect();
-
-    for handle in handles {
-        if let Ok(Some(dep)) = handle.join() {
+    for name in imports::imports_from_source(&source) {
+        if let Some(dep) = resolve_module(&name, source_dirs) {
             if out.insert(dep.clone()) && dep.extension().and_then(|e| e.to_str()) == Some("elm") {
                 collect(&dep, source_dirs, known, out)?;
             }

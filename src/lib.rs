@@ -7,6 +7,9 @@ pub mod hmr;
 pub mod import_id;
 pub mod options;
 
+#[cfg(test)]
+pub mod speed;
+
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

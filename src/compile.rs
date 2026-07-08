@@ -24,8 +24,9 @@ pub fn compile(request: CompileRequest) -> Result<CompileOutput> {
         .ok_or_else(|| Error::new("Could not find elm.json"))?;
 
     let mut dependencies = Vec::new();
+    let source_dirs = deps::source_dirs_for(first)?;
     for target in &request.targets {
-        dependencies.extend(deps::dependencies(target)?);
+        dependencies.extend(deps::dependencies_with_source_dirs(target, &source_dirs)?);
     }
     dependencies.sort();
     dependencies.dedup();
@@ -56,12 +57,28 @@ pub fn compile(request: CompileRequest) -> Result<CompileOutput> {
     Ok(CompileOutput { code, dependencies })
 }
 
-fn vite_project_path(path: &Path, current_dir: &Path) -> String {
-    let relative = lexical_relative(current_dir, path).unwrap_or_else(|| path.to_string_lossy().into_owned());
+pub(crate) fn vite_project_path(path: &Path, current_dir: &Path) -> String {
+    let relative = path
+        .strip_prefix(current_dir)
+        .ok()
+        .map(path_to_posix)
+        .unwrap_or_else(|| lexical_relative(current_dir, path).unwrap_or_else(|| path.to_string_lossy().into_owned()));
     format!("/{}", relative)
 }
 
-fn lexical_relative(from: &Path, to: &Path) -> Option<String> {
+fn path_to_posix(path: &Path) -> String {
+    let mut parts = Vec::new();
+    for component in path.components() {
+        parts.push(component.as_os_str().to_string_lossy().into_owned());
+    }
+    if parts.is_empty() {
+        ".".into()
+    } else {
+        parts.join("/")
+    }
+}
+
+pub(crate) fn lexical_relative(from: &Path, to: &Path) -> Option<String> {
     let from = from.components().collect::<Vec<_>>();
     let to = to.components().collect::<Vec<_>>();
     if from.first() != to.first() {
