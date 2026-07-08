@@ -37,8 +37,9 @@ Use this loop for every task:
 3. State the exact scope in one sentence.
 4. Edit only required files.
 5. Run the smallest proof command.
-6. Update `AGENT_HARNESS.md` progress log if the task changes repo state.
-7. Stop after one task unless the human asked for a larger batch.
+6. Run `./scripts/after-task.sh` before claiming success.
+7. Update `AGENT_HARNESS.md` progress log if the task changes repo state.
+8. Stop after one task unless the human asked for a larger batch.
 
 ## Rust style
 
@@ -66,21 +67,22 @@ DON'T:
 
 ### Codex
 
-Use `AGENT_HARNESS.md` as the active loop checklist. Keep final answers short and include proof commands.
+Use `AGENT_HARNESS.md` as the active loop checklist. After each task, run `.codex/hooks/after-task.sh` or `./scripts/after-task.sh`. Keep final answers short and include proof commands.
 
 ### Claude
 
-Read this file as the project memory entrypoint. Do not infer broader scope from general Claude defaults. The repo-specific rule wins: one task, stdlib-only Rust, no implementation until asked.
+Read this file as the project memory entrypoint. Do not infer broader scope from general Claude defaults. The repo-specific rule wins: one task, stdlib-only Rust, proof after each task. Use `.claude/hooks/after-task.sh` or `./scripts/after-task.sh`.
 
 ### Antigravity
 
-Treat this repo as a planning/harness repo until implementation is explicitly requested. Keep worktree edits scoped to docs unless the active task says otherwise. Use `AGENT_HARNESS.md` as the task queue and proof ledger.
+Keep worktree edits scoped to the active task. Use `AGENT_HARNESS.md` as the task queue and proof ledger. After each task, run `.antigravity/hooks/after-task.sh` or `./scripts/after-task.sh`.
 
 ## Completion proof
 
 Before claiming done, verify:
 
 - Required files exist.
-- No unintended implementation files were created.
-- The changed docs mention Codex, Claude, and Antigravity or otherwise make them agent-ready.
-- The worktree diff matches the requested harnessing scope.
+- `cargo test` passes.
+- `npm run build` passes.
+- No generated `bin/`, `dist/`, `target/`, or `node_modules/` files are staged.
+- The worktree diff matches the requested scope.

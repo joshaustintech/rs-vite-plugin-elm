@@ -14,8 +14,9 @@ Each loop must:
 4. State scope in one sentence.
 5. Edit only files required for that scope.
 6. Run the smallest proof command.
-7. Update this harness with result and next task.
-8. Stop if proof fails and record exact blocker.
+7. Run `./scripts/after-task.sh` before claiming success.
+8. Update this harness with result and next task.
+9. Stop if proof fails and record exact blocker.
 
 ## Global rules
 
@@ -35,6 +36,7 @@ DO:
 - Use `PathBuf`, `String`, `Vec`, `HashMap`, `HashSet`, `Command`, `Mutex` from std.
 - Write tests before or beside parser/transform changes.
 - Keep temp-file cleanup best-effort.
+- Run `./scripts/after-task.sh` after each task.
 
 DON'T:
 
@@ -50,6 +52,7 @@ DON'T:
 - Do not fix suspected upstream bugs during parity work unless a test proves required.
 - Do not skip proof.
 - Do not claim done without command output.
+- Do not stage generated `bin/`, `dist/`, `target/`, or `node_modules/`.
 
 ## First implementation loops
 
@@ -66,6 +69,7 @@ DON'T:
 - [x] Add HMR template injection and nav-key hotfix tests.
 - [x] Add thin Vite wrapper with compile serialization.
 - [ ] Run parity smoke against current `vite-plugin-elm/example`.
+- [ ] Keep GitHub Actions and agent hooks green after every task.
 
 ## Loop prompt template
 
@@ -94,3 +98,4 @@ Do not start the next task.
 - 2026-07-08: Planning docs created from inspection of `vite-plugin-elm` source plus installed `node-elm-compiler`, `elm-esm`, `find-elm-dependencies`, and `find-up` sources. No Rust code implemented.
 - 2026-07-08: Added cross-vendor agent entrypoints: `AGENTS.md`, `CLAUDE.md`, and `ANTIGRAVITY.md`. No implementation code added.
 - 2026-07-08: Added stdlib-only Rust crate, tests-first core modules, CLI, and npm/Vite shim. Proof: `cargo test`, `npm run build`, Vite hook-level `load` smoke for `Hello.elm`, asset-helper smoke for `Application.elm`, and `npm pack --dry-run` passed. Real `vite-plugin-elm/example npm ci` was attempted but failed because the original plugin package `prepare` script needs root `tsc`; this is unrelated to the Rust package.
+- 2026-07-08: Added human README, CI workflow, build badge, and Claude/Codex/Antigravity after-task hooks. Proof: `./scripts/after-task.sh` passed; `act -j build --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest` passed locally. Macro audit found no repetition where a macro improved readability without hiding simple logic, so no macro was added.
