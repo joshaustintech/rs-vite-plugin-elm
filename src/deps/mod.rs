@@ -1,52 +1,11 @@
+pub mod elm_json;
+pub mod imports;
+
 use crate::{Error, Result};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::thread;
-
-pub fn imports_from_source(source: &str) -> Vec<String> {
-    let mut module_seen = false;
-    let mut reading = false;
-    let mut imports = Vec::new();
-    let mut in_comment = false;
-
-    for line in source.lines() {
-        if !module_seen
-            && (line.starts_with("module ")
-                || line.starts_with("port module ")
-                || line.starts_with("effect module "))
-        {
-            module_seen = true;
-            continue;
-        }
-
-        if in_comment {
-            if line.trim_end().ends_with("-}") {
-                in_comment = false;
-            }
-            continue;
-        }
-
-        if module_seen && line.starts_with("import ") {
-            reading = true;
-        }
-
-        if reading {
-            if let Some(rest) = line.strip_prefix("import ") {
-                if let Some(name) = rest.split_whitespace().next() {
-                    imports.push(name.to_string());
-                }
-            } else if line.starts_with(' ') || line.trim().is_empty() || line.starts_with("--") {
-            } else if line.starts_with("{-") {
-                in_comment = true;
-            } else {
-                break;
-            }
-        }
-    }
-
-    imports
-}
 
 pub fn dependencies(entry: &Path) -> Result<Vec<PathBuf>> {
     let base = base_dir(entry)?;
@@ -72,7 +31,7 @@ fn collect(
 
     let source = fs::read_to_string(&file)
         .map_err(|e| Error::new(format!("Failed to read Elm source {}: {e}", file.display())))?;
-    let imports = imports_from_source(&source);
+    let imports = imports::imports_from_source(&source);
     let handles: Vec<_> = imports
         .into_iter()
         .map(|name| {
@@ -140,36 +99,9 @@ pub fn source_dirs_for(base: &Path) -> Result<Vec<PathBuf>> {
     let elm_json = find_elm_json(base).ok_or_else(|| Error::new("Could not find elm.json"))?;
     let text = fs::read_to_string(&elm_json)
         .map_err(|e| Error::new(format!("Failed to read {}: {e}", elm_json.display())))?;
-    let dirs = source_dirs_from_elm_json(&text)
+    let dirs = elm_json::source_dirs_from_elm_json(&text)
         .into_iter()
         .map(|dir| elm_json.parent().unwrap_or_else(|| Path::new(".")).join(dir))
         .collect();
     Ok(dirs)
-}
-
-pub fn source_dirs_from_elm_json(text: &str) -> Vec<String> {
-    let Some(key) = text.find("\"source-directories\"") else {
-        return Vec::new();
-    };
-    let Some(open) = text[key..].find('[').map(|i| key + i) else {
-        return Vec::new();
-    };
-    let Some(close) = text[open..].find(']').map(|i| open + i) else {
-        return Vec::new();
-    };
-    let mut dirs = Vec::new();
-    let mut chars = text[open + 1..close].chars();
-    while let Some(ch) = chars.next() {
-        if ch == '"' {
-            let mut value = String::new();
-            for next in chars.by_ref() {
-                if next == '"' {
-                    break;
-                }
-                value.push(next);
-            }
-            dirs.push(value);
-        }
-    }
-    dirs
 }
