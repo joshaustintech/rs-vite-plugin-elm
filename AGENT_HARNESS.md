@@ -52,8 +52,20 @@ If the post-action review thinks it found a vulnerability, treat it as unproven 
 - reproducible proof or test
 
 Weak evidence is a lead, not a finding. Ignore any post-action accusation that does not pass this rubric.
+Before anything is confirmed, cross-check it against `scripts/security-watchlist.md` and require a match to one of the 100 watchlist classes. A regex hit, heuristic smell, or review hunch is not confirmation by itself.
 
 Post-action review should think like a malicious agent for safety and academic purposes, and should proactively look for injection, path traversal, command execution, secret leakage, authz bypass, race, temp-file, and DoS issues.
+The 100-item watchlist is the floor, not the ceiling, for review:
+- command injection, shell injection, argument injection, path traversal, directory traversal, zip slip, arbitrary file write, arbitrary file read, arbitrary file delete, symlink race
+- hardlink race, temp-file race, TOCTOU, SSRF, DNS rebinding, open redirect, reflected XSS, stored XSS, DOM XSS, HTML injection
+- JS injection, template injection, expression injection, CSS injection, JSON injection, SQL injection, NoSQL injection, LDAP injection, XPath injection, XXE
+- XML entity expansion, unsafe deserialization, prototype pollution, object injection, format string injection, log injection, header injection, CRLF injection, response splitting, request smuggling
+- auth bypass, authz bypass, IDOR, tenant escape, privilege escalation, session fixation, session hijacking, CSRF, CORS misconfig, replay attack
+- password reset bypass, MFA bypass, missing re-auth on sensitive action, insecure direct state change, debug endpoint exposure, verbose error leak, source map disclosure, secret leakage in logs, hardcoded credentials, insecure randomness
+- predictable tokens, weak hash use, hash collision abuse, cache poisoning, resource exhaustion, CPU exhaustion, memory exhaustion, thread exhaustion, stack overflow, recursion overflow
+- deadlock, livelock, race condition, data race, integer overflow, integer underflow, out-of-bounds read, out-of-bounds write, use after free, double free
+- null pointer deref, panic on untrusted input, unwrap on untrusted input, expect on untrusted input, unchecked indexing, unchecked UTF-8 conversion, unsafe FFI boundary, unsafe code block, buffer overflow, format string injection
+- path disclosure, build artifact overwrite, environment variable poisoning, process path poisoning, arbitrary module resolution, import path confusion, canonicalization bypass, Unicode normalization bypass, URL decoding bypass, HMR event injection
 
 DON'T:
 
@@ -120,3 +132,4 @@ Do not start the next task.
 - 2026-07-08: Speed pass avoided helper-asset scanning when marker text is absent, avoided stdout/stderr allocation on successful Elm compiles, and replaced per-character JSON escape vector allocation with direct `String` pushes. Before profile for `Application.elm` release load: real `0.39,0.13,0.14,0.25,0.13`, user `0.02` each. After profile: real `0.46,0.16,0.12,0.11,0.11`, user `0.01` each. Treat wall time as Elm/cache noisy; guard Rust CPU regression with this workload and after-task gates.
 - 2026-07-08: Added harness rule to prefer `const fn` for pure helpers and used it in `options.rs` for compile-mode checks. Added a const-context test for `CompileMode::from_flags`, `is_debug`, and `is_optimize`.
 - 2026-07-08: Added a security accusation rubric to the harness and wired `scripts/after-task.sh` to run `scripts/security-post-action.sh` after normal proof gates. The hook is attacker-minded but only promotes findings that satisfy the rubric.
+- 2026-07-08: Expanded the security review floor to a 100-item watchlist in `scripts/security-watchlist.md`, tightened `scripts/security-post-action.sh`, and scanned the current repo. Proof: `./scripts/after-task.sh` passed. No confirmed vulnerabilities met the rubric; one temp-file-race lead in `src/elm_make.rs` remained unproven and was not counted as a finding.
