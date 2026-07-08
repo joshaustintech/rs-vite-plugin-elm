@@ -8,7 +8,7 @@ pub struct Options {
     pub docs: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompileMode {
     Debug,
     Optimize,
@@ -24,11 +24,7 @@ impl Options {
     ) -> Self {
         let debug = debug.unwrap_or(!is_build);
         let optimize = optimize.unwrap_or(!debug && is_build);
-        let mode = match (debug, optimize) {
-            (true, _) => CompileMode::Debug,
-            (false, true) => CompileMode::Optimize,
-            (false, false) => CompileMode::Plain,
-        };
+        let mode = CompileMode::from_flags(debug, optimize);
 
         Self {
             is_build,
@@ -40,11 +36,50 @@ impl Options {
         }
     }
 
-    pub fn debug(&self) -> bool {
-        matches!(self.mode, CompileMode::Debug)
+    pub const fn debug(&self) -> bool {
+        self.mode.is_debug()
     }
 
-    pub fn optimize(&self) -> bool {
-        matches!(self.mode, CompileMode::Optimize)
+    pub const fn optimize(&self) -> bool {
+        self.mode.is_optimize()
+    }
+}
+
+impl CompileMode {
+    pub const fn from_flags(debug: bool, optimize: bool) -> Self {
+        if debug {
+            Self::Debug
+        } else if optimize {
+            Self::Optimize
+        } else {
+            Self::Plain
+        }
+    }
+
+    pub const fn is_debug(self) -> bool {
+        matches!(self, Self::Debug)
+    }
+
+    pub const fn is_optimize(self) -> bool {
+        matches!(self, Self::Optimize)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CompileMode;
+
+    const DEBUG_MODE: CompileMode = CompileMode::from_flags(true, false);
+    const OPT_MODE: CompileMode = CompileMode::from_flags(false, true);
+    const PLAIN_MODE: CompileMode = CompileMode::from_flags(false, false);
+
+    #[test]
+    fn compile_mode_helpers_work_in_const_contexts() {
+        assert!(DEBUG_MODE.is_debug());
+        assert!(!DEBUG_MODE.is_optimize());
+        assert!(OPT_MODE.is_optimize());
+        assert!(!OPT_MODE.is_debug());
+        assert!(!PLAIN_MODE.is_debug());
+        assert!(!PLAIN_MODE.is_optimize());
     }
 }
