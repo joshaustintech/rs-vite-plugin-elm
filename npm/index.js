@@ -20,16 +20,25 @@ const checkCommandInPath = (cmd) => {
 
 const verifyEnvironment = () => {
   const hasElm = checkCommandInPath('elm')
-  const hasRust = checkCommandInPath('cargo')
 
-  if (!hasElm || !hasRust) {
+  if (!hasElm) {
     const missing = []
     if (!hasElm) missing.push('Elm (https://elm-lang.org/)')
-    if (!hasRust) missing.push('Rust (https://www.rust-lang.org/)')
     throw new Error(
       `[rs-vite-plugin-elm] Environment verification failed. The following required tools are missing from your PATH:\n` +
       missing.map(tool => `  - ${tool}`).join('\n') +
       `\nPlease install them and ensure they are available in your PATH.`
+    )
+  }
+
+  if (existsSync(binary)) return
+
+  const hasRust = checkCommandInPath('cargo')
+  if (!hasRust) {
+    throw new Error(
+      `[rs-vite-plugin-elm] Environment verification failed. The following required tools are missing from your PATH:\n` +
+      `  - Rust (https://www.rust-lang.org/)\n` +
+      `Please install them and ensure they are available in your PATH.`
     )
   }
 

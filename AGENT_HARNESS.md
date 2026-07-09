@@ -85,7 +85,7 @@ DON'T:
 
 ## First implementation loops
 
-- [ ] Freeze current JS plugin outputs from the example project as fixtures.
+- [x] Freeze current JS plugin outputs from the example project as fixtures.
 - [x] Create Rust crate skeleton with `forbid(unsafe_code)` and zero dependencies.
 - [x] Implement import-id parser tests and code.
 - [x] Implement nearest `elm.json` lookup tests and code.
@@ -142,3 +142,5 @@ Do not start the next task.
 - 2026-07-08: Verified the local-only perf harness with `sh ./scripts/profile-local.sh`; it reports timings but does not gate CI. Functional gates stayed green with `cargo test` and `./scripts/after-task.sh`.
 - 2026-07-08: Prepared the repository for production use as a downloadable npm package from Github, supporting Mac, Windows, and Linux. Added platform-agnostic Node.js build and postinstall scripts, cross-platform binary name resolution, and robust checks in the Vite plugin to gracefully handle missing Elm or Rust toolchains in PATH. Proof: `./scripts/after-task.sh` passed.
 - 2026-07-08: Verified semver automation end-to-end in a disposable clone. With `core.hooksPath` set to `.githooks`, an empty commit triggered `scripts/semver-bump.js` automatically and bumped `package.json` from `0.2.0` to `0.2.1` during the post-commit hook. Proof: disposable-clone commit showed `Bumping version from 0.2.0 to 0.2.1 (patch)` and the hook-produced commit had `package.json` version `0.2.1`; repo gate `./scripts/after-task.sh` passed afterward.
+- 2026-07-08: Relaxed the Vite wrapper and install hook so they trust the packaged helper binary first and only require `cargo` when a rebuild is actually needed. This fixes local app builds that had Rust installed but not visible through the wrapper's load-time probe. Proof: `node --test test/npm-wrapper.test.js`, `cargo test`, and tandem `HOME=/private/tmp/tandem-home npm run build` passed after the dist artifact was refreshed.
+- 2026-07-09: Froze the upstream example outputs into a compact snapshot fixture and a parity test for `Hello`, `Application`, and `Description?with=AnotherDescription`. Proof: fixture hashes and lengths were captured from the current `vite-plugin-elm/dist/index.js` behavior in `vite-plugin-elm/example`.

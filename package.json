@@ -1,6 +1,6 @@
 {
   "name": "rs-vite-plugin-elm",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Stdlib-only Rust core Vite plugin for Elm",
   "type": "module",
   "exports": "./dist/index.js",

@@ -1,0 +1,14 @@
+{
+  "Hello": {
+    "hash": "83337f146f0678c5e8222b4c4f6a7771034f80de90623167fb0413891dc99260",
+    "codeLength": 287147
+  },
+  "Application": {
+    "hash": "6bbcc312699c2bb4d156c177cf5c701182f1414784d402f64cbadc28ab264778",
+    "codeLength": 287442
+  },
+  "Description+AnotherDescription": {
+    "hash": "190c0b40d7658d6895d64da755b66178958ad49cd28763a2d22cab8422d0ccd9",
+    "codeLength": 288038
+  }
+}
