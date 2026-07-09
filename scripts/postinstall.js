@@ -42,3 +42,21 @@ if (!hasRust || !hasElm) {
     console.error('Failed to build native plugin binary.')
   }
 }
+
+// Setup git hooks if in a git repository
+try {
+  const isGit = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { stdio: 'ignore' });
+  if (isGit.status === 0) {
+    console.log('Configuring local git hooks directory...');
+    const hooksRes = spawnSync('git', ['config', 'core.hooksPath', '.githooks'], {
+      cwd: root,
+      stdio: 'inherit',
+    });
+    if (hooksRes.status !== 0) {
+      console.warn('Warning: Failed to configure git hooks path.');
+    }
+  }
+} catch (e) {
+  // Git command might not exist or failed
+}
+

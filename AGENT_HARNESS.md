@@ -98,6 +98,7 @@ DON'T:
 - [x] Add HMR template injection and nav-key hotfix tests.
 - [x] Add thin Vite wrapper with compile serialization.
 - [x] Run parity smoke against current `vite-plugin-elm/example`.
+- [ ] Create semver automation for each git commit.
 - [ ] Keep GitHub Actions and agent hooks green after every task.
 
 ## Loop prompt template
