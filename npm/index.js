@@ -1,9 +1,50 @@
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, normalize, relative, resolve } from 'node:path'
+import { existsSync } from 'node:fs'
+import { platform } from 'node:os'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const binary = resolve(here, '../bin/rs-vite-plugin-elm')
+const isWindows = platform() === 'win32'
+const binaryName = isWindows ? 'rs-vite-plugin-elm.exe' : 'rs-vite-plugin-elm'
+const binary = resolve(here, `../bin/${binaryName}`)
+
+const checkCommandInPath = (cmd) => {
+  try {
+    const res = spawnSync(cmd, ['--version'], { stdio: 'ignore' })
+    return res.status === 0
+  } catch {
+    return false
+  }
+}
+
+const verifyEnvironment = () => {
+  const hasElm = checkCommandInPath('elm')
+  const hasRust = checkCommandInPath('cargo')
+
+  if (!hasElm || !hasRust) {
+    const missing = []
+    if (!hasElm) missing.push('Elm (https://elm-lang.org/)')
+    if (!hasRust) missing.push('Rust (https://www.rust-lang.org/)')
+    throw new Error(
+      `[rs-vite-plugin-elm] Environment verification failed. The following required tools are missing from your PATH:\n` +
+      missing.map(tool => `  - ${tool}`).join('\n') +
+      `\nPlease install them and ensure they are available in your PATH.`
+    )
+  }
+
+  if (!existsSync(binary)) {
+    console.log('[rs-vite-plugin-elm] Native helper binary not found. Attempting to build from source...')
+    const buildResult = spawnSync('node', [resolve(here, '../scripts/build.js')], {
+      cwd: resolve(here, '..'),
+      stdio: 'inherit',
+    })
+    if (buildResult.status !== 0 || !existsSync(binary)) {
+      throw new Error('[rs-vite-plugin-elm] Failed to build the native helper binary.')
+    }
+  }
+}
+
 
 const trimDebugMessage = (code) => code.replace(/(console\.warn\('Compiled in DEBUG mode)/, '// $1')
 const viteProjectPath = (dependency) => `/${relative(process.cwd(), dependency)}`
@@ -79,6 +120,7 @@ const optionalArg = (value) => (value === undefined || value === null ? '-' : St
 const optionalObjectArg = (value) => (value === undefined || value === null ? '-' : JSON.stringify(value))
 
 export const plugin = (userOptions = {}) => {
+  verifyEnvironment()
   const options = parseOptions(userOptions)
   const compilableFiles = new Map()
 

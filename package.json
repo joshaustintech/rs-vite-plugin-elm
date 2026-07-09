@@ -12,7 +12,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "cargo build --release && mkdir -p dist bin && cp target/release/rs-vite-plugin-elm bin/rs-vite-plugin-elm && cp npm/index.js dist/index.js && cp npm/index.d.ts dist/index.d.ts",
+    "build": "node scripts/build.js",
+    "postinstall": "node scripts/postinstall.js",
     "test": "cargo test"
   },
   "peerDependencies": {
