@@ -98,7 +98,7 @@ DON'T:
 - [x] Add HMR template injection and nav-key hotfix tests.
 - [x] Add thin Vite wrapper with compile serialization.
 - [x] Run parity smoke against current `vite-plugin-elm/example`.
-- [ ] Create semver automation for each git commit.
+- [x] Create semver automation for each git commit.
 - [ ] Keep GitHub Actions and agent hooks green after every task.
 
 ## Loop prompt template
@@ -141,3 +141,4 @@ Do not start the next task.
 - 2026-07-08: Removed benchmark-style speed assertions from the Rust test suite after CI reported a flaky timing failure. Added ADR 0001 and a local-only `scripts/profile-local.sh` harness so perf checks stay out of CI/CD tests.
 - 2026-07-08: Verified the local-only perf harness with `sh ./scripts/profile-local.sh`; it reports timings but does not gate CI. Functional gates stayed green with `cargo test` and `./scripts/after-task.sh`.
 - 2026-07-08: Prepared the repository for production use as a downloadable npm package from Github, supporting Mac, Windows, and Linux. Added platform-agnostic Node.js build and postinstall scripts, cross-platform binary name resolution, and robust checks in the Vite plugin to gracefully handle missing Elm or Rust toolchains in PATH. Proof: `./scripts/after-task.sh` passed.
+- 2026-07-08: Verified semver automation end-to-end in a disposable clone. With `core.hooksPath` set to `.githooks`, an empty commit triggered `scripts/semver-bump.js` automatically and bumped `package.json` from `0.2.0` to `0.2.1` during the post-commit hook. Proof: disposable-clone commit showed `Bumping version from 0.2.0 to 0.2.1 (patch)` and the hook-produced commit had `package.json` version `0.2.1`; repo gate `./scripts/after-task.sh` passed afterward.
