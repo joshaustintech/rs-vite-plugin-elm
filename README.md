@@ -52,10 +52,22 @@ Run the same post-task proof agents are expected to run:
 
 ## Use from Vite
 
-Install locally while developing:
+Clone the repo somewhere on your machine:
 
 ```sh
-npm install /path/to/rs-vite-plugin-elm
+git clone https://github.com/joshaustintech/rs-vite-plugin-elm.git
+```
+
+Then point your app at that local checkout. If the plugin repo sits next to your app, the path can be relative:
+
+```sh
+npm install ../rs-vite-plugin-elm
+```
+
+If the repo lives elsewhere, use its absolute path instead:
+
+```sh
+npm install /absolute/path/to/rs-vite-plugin-elm
 ```
 
 Then use it in `vite.config.js`:
@@ -77,6 +89,8 @@ Elm.Main.init({
   node: document.getElementById('app'),
 })
 ```
+
+That keeps your app running against the local checkout, so edits in the plugin repo are used as soon as you rebuild your app.
 
 ## Package Dry Run
 

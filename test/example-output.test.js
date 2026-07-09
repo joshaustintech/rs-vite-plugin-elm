@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const fixture = JSON.parse(await readFile(resolve(here, 'example-output.snapshot.json'), 'utf8'))
 const exampleRoot = resolve(here, '../../vite-plugin-elm/example')
 const pluginPath = resolve(here, '../../vite-plugin-elm/dist/index.js')
+const exampleSrc = resolve(exampleRoot, 'src')
 
 const loadOutput = async (id, context = {}) => {
   const script = `
@@ -40,15 +41,15 @@ const loadOutput = async (id, context = {}) => {
 }
 
 test('freezes the upstream example plugin outputs', async () => {
-  const hello = await loadOutput('/Users/josh/vite_plugin_elm_work/vite-plugin-elm/example/src/Hello.elm')
-  const application = await loadOutput('/Users/josh/vite_plugin_elm_work/vite-plugin-elm/example/src/Application.elm')
+  const hello = await loadOutput(resolve(exampleSrc, 'Hello.elm'))
+  const application = await loadOutput(resolve(exampleSrc, 'Application.elm'))
   const description = await loadOutput(
-    '/Users/josh/vite_plugin_elm_work/vite-plugin-elm/example/src/Description.elm?with=./AnotherDescription.elm',
+    `${resolve(exampleSrc, 'Description.elm')}?with=./AnotherDescription.elm`,
     {
       with: true,
       getModuleIds: [
-        '/Users/josh/vite_plugin_elm_work/vite-plugin-elm/example/src/elements.js',
-        '/Users/josh/vite_plugin_elm_work/vite-plugin-elm/example/src/Description.elm?with=./AnotherDescription.elm',
+        resolve(exampleSrc, 'elements.js'),
+        `${resolve(exampleSrc, 'Description.elm')}?with=./AnotherDescription.elm`,
       ],
     },
   )

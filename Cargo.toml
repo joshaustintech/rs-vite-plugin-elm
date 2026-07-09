@@ -1,6 +1,6 @@
 [package]
 name = "rs-vite-plugin-elm"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 license = "MIT"
 description = "Stdlib-only Rust core for vite-plugin-elm"
