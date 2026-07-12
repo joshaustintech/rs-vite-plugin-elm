@@ -1,6 +1,6 @@
 {
   "name": "rs-vite-plugin-elm",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Stdlib-only Rust core Vite plugin for Elm",
   "type": "module",
   "exports": "./dist/index.js",
@@ -14,7 +14,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "postinstall": "node scripts/postinstall.js",
-    "test": "cargo test"
+    "test": "cargo test && node --test test/config-surface.test.js test/npm-wrapper.test.js"
   },
   "peerDependencies": {
     "vite": ">= 5.0.0"
