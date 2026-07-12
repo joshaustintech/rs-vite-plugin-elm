@@ -1,17 +1,17 @@
 # Roadmap
 
-## Line-count reduction candidates
+## Line-count reductions retained
 
-These are candidates, not approved behavior changes. Each needs parity proof
-before adoption.
+Each retained change passed the existing parity and build gates. The pass
+removed 29 lines from the edited tracked files without changing behavior.
 
-1. Replace duplicated CLI optional-value parsers with one typed decoder.
-2. Combine repeated JSON escaping/output assembly in CLI commands.
-3. Collapse `CompileRequest` forwarding into a single compile entry helper.
-4. Share dependency normalization between custom and built-in wrapper paths.
-5. Generate thin JS/dist copies from one source during packaging.
-6. Merge wrapper environment checks into one command-resolution function.
-7. Replace hand-written repeated option forwarding with one ordered field list.
-8. Consolidate HMR static template fragments into one literal plus substitutions.
-9. Fold small one-use path helpers into callers where tests keep intent clear.
-10. Remove duplicated plan/harness workflow prose by making one canonical rule set and linking to it.
+1. Shared CLI path-array JSON serialization across `load` and `deps`.
+2. Ordered compiler-option key list for JS-to-Rust argument forwarding.
+3. Inlined one-use POSIX path conversion helper.
+4. Replaced duplicated harness prompt prose with a link to `AGENTS.md`.
+
+The other six candidates were attempted and rejected: optional parsers had no
+safe net reduction; collapsing `CompileRequest` risks its public API; shared
+dependency normalization adds a helper for only two call sites; packaging
+already copies one JS source into `dist`; environment-check consolidation
+would blur distinct error contracts; and HMR is already one static template.

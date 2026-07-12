@@ -127,6 +127,8 @@ const runRust = (command, args, input) =>
 
 const optionalArg = (value) => (value === undefined || value === null ? '-' : String(value))
 const optionalObjectArg = (value) => (value === undefined || value === null ? '-' : JSON.stringify(value))
+const compilerOptionKeys = ['debug', 'optimize', 'verbose', 'pathToElm', 'cwd', 'report', 'docs']
+const compilerArgs = (options) => compilerOptionKeys.map((key) => optionalArg(options[key])).concat(optionalObjectArg(options.processOpts))
 
 export const plugin = (userOptions = {}) => {
   verifyEnvironment()
@@ -195,14 +197,7 @@ export const plugin = (userOptions = {}) => {
         result = await withLock(() =>
           runRust('load', [
             String(options.isBuild),
-            optionalArg(options.compilerOptions.debug),
-            optionalArg(options.compilerOptions.optimize),
-            optionalArg(options.compilerOptions.verbose),
-            optionalArg(options.compilerOptions.pathToElm),
-            optionalArg(options.compilerOptions.cwd),
-            optionalArg(options.compilerOptions.report),
-            optionalArg(options.compilerOptions.docs),
-            optionalObjectArg(options.compilerOptions.processOpts),
+            ...compilerArgs(options.compilerOptions),
             ...targets,
           ]),
         )

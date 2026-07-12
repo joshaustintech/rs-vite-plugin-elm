@@ -28,6 +28,14 @@ pub fn parse_optional_path(value: &str) -> Option<PathBuf> {
     parse_optional_string(value).map(PathBuf::from)
 }
 
+pub fn json_paths(paths: &[PathBuf]) -> String {
+    paths
+        .iter()
+        .map(|path| format!("\"{}\"", json_escape(&path.to_string_lossy())))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
 pub fn json_escape(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len());
     for ch in value.chars() {

@@ -76,13 +76,9 @@ pub(crate) fn vite_project_path(path: &Path, current_dir: &Path) -> String {
     let relative = path
         .strip_prefix(current_dir)
         .ok()
-        .map(path_to_posix)
+        .map(|path| path.to_string_lossy().replace('\\', "/"))
         .unwrap_or_else(|| lexical_relative(current_dir, path).unwrap_or_else(|| path.to_string_lossy().into_owned()));
     format!("/{}", relative)
-}
-
-fn path_to_posix(path: &Path) -> String {
-    path.to_string_lossy().replace('\\', "/")
 }
 
 pub(crate) fn lexical_relative(from: &Path, to: &Path) -> Option<String> {

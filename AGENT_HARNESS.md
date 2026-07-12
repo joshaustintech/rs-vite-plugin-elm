@@ -101,27 +101,7 @@ DON'T:
 - [x] Create semver automation for each git commit.
 - [ ] Keep GitHub Actions and agent hooks green after every task.
 
-## Loop prompt template
-
-```md
-You are working in `rs-vite-plugin-elm`.
-
-Read `PLAN.md` and `AGENT_HARNESS.md`.
-
-Pick the first unchecked task in `AGENT_HARNESS.md`.
-
-Rules:
-- stdlib-only Rust
-- no unsafe code
-- no Rust dependencies
-- no npm runtime dependencies except the thin Vite wrapper and official Elm tooling
-- one smallest task only
-- preserve current `vite-plugin-elm` behavior
-- prove with the smallest command
-- update `AGENT_HARNESS.md` checkbox/result before stopping
-
-Do not start the next task.
-```
+Canonical workflow rules live in `AGENTS.md`; this file carries the queue and proof ledger.
 
 ## Progress log
 
@@ -146,3 +126,4 @@ Do not start the next task.
 - 2026-07-09: Froze the upstream example outputs into a compact snapshot fixture and a parity test for `Hello`, `Application`, and `Description?with=AnotherDescription`. Proof: fixture hashes and lengths were captured from the current `vite-plugin-elm/dist/index.js` behavior in `vite-plugin-elm/example`.
 - 2026-07-09: Expanded the README with explicit clone-and-point-local-checkout instructions for using the plugin from a downloaded git repo. Proof pending `./scripts/after-task.sh`.
 - 2026-07-12: Documented complete JS configuration surface and added Node smoke coverage for every documented option shape plus custom compiler postprocessing. Added `ROADMAP.md` with ten parity-gated line-count reduction candidates. Proof: `./scripts/after-task.sh` passed.
+- 2026-07-12: Attempted all ten LOC-reduction candidates. Retained four proven reductions: shared CLI JSON path serialization, ordered JS compiler-option forwarding, inlined one-use path conversion, and canonicalized harness workflow prose. Rejected six after line-count/parity review: optional parser merge, `CompileRequest` collapse, dependency-normalization helper, packaging-copy rewrite, environment-check merge, and HMR-template split. Net diff reduction: 29 lines. Proof: `./scripts/after-task.sh` passed.

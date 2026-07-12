@@ -51,12 +51,7 @@ fn load(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "{{\"code\":\"{}\",\"dependencies\":[{}]}}",
         cli::json_escape(&output.code),
-        output
-            .dependencies
-            .iter()
-            .map(|path| format!("\"{}\"", cli::json_escape(&path.to_string_lossy())))
-            .collect::<Vec<_>>()
-            .join(",")
+        cli::json_paths(&output.dependencies)
     );
     Ok(())
 }
@@ -70,11 +65,7 @@ fn deps(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     let dependencies = dependencies_for_targets(&targets, cwd.as_deref())?;
     println!(
         "[{}]",
-        dependencies
-            .iter()
-            .map(|path| format!("\"{}\"", cli::json_escape(&path.to_string_lossy())))
-            .collect::<Vec<_>>()
-            .join(",")
+        cli::json_paths(&dependencies)
     );
     Ok(())
 }
